@@ -39,35 +39,37 @@ export function AddCarForm() {
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error("Error accessing camera: ", error);
         let errorMessage = "No se pudo acceder a la cámara.";
-        switch (error.name) {
-          case 'NotAllowedError':
-            errorMessage = "Permiso denegado. Por favor, permite el acceso a la cámara en los ajustes de tu navegador.";
-            break;
-          case 'NotFoundError':
-            errorMessage = "No se encontró una cámara compatible en tu dispositivo.";
-            break;
-          case 'NotReadableError':
-            errorMessage = "La cámara está siendo utilizada por otra aplicación.";
-            break;
-          case 'OverconstrainedError':
-            errorMessage = "No se pudo encontrar una cámara trasera. Intentando con la frontal.";
-            // Fallback to any camera
-            try {
-              const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-              if (videoRef.current) {
-                videoRef.current.srcObject = stream;
-                return; // Exit after successful fallback
+        if (error instanceof Error) {
+          switch (error.name) {
+            case 'NotAllowedError':
+              errorMessage = "Permiso denegado. Por favor, permite el acceso a la cámara en los ajustes de tu navegador.";
+              break;
+            case 'NotFoundError':
+              errorMessage = "No se encontró una cámara compatible en tu dispositivo.";
+              break;
+            case 'NotReadableError':
+              errorMessage = "La cámara está siendo utilizada por otra aplicación.";
+              break;
+            case 'OverconstrainedError':
+              errorMessage = "No se pudo encontrar una cámara trasera. Intentando con la frontal.";
+              // Fallback to any camera
+              try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                if (videoRef.current) {
+                  videoRef.current.srcObject = stream;
+                  return; // Exit after successful fallback
+                }
+              } catch (_fallbackError) {
+                errorMessage = "No se pudo encontrar ninguna cámara disponible.";
               }
-            } catch (fallbackError) {
-              errorMessage = "No se pudo encontrar ninguna cámara disponible.";
-            }
-            break;
-          default:
-            errorMessage = `Error desconocido: ${error.message}`;
-            break;
+              break;
+            default:
+              errorMessage = `Error desconocido: ${error.message}`;
+              break;
+          }
         }
         toast.error(errorMessage);
         setIsCameraModalOpen(false);
@@ -89,7 +91,6 @@ export function AddCarForm() {
     } else {
       stopCamera();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isCameraModalOpen]);
 
   const handleCapture = () => {

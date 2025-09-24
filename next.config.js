@@ -9,6 +9,12 @@ const nextConfig = {
         // Este pathname permite cualquier ruta dentro del storage
         pathname: '/storage/v1/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'lh3.googleusercontent.com',
+        port: '',
+        pathname: '/**',
+      },
     ],
   },
 };
