@@ -2,6 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { FilterControls } from "./_components/filter-controls";
 import Image from "next/image";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
 
 type Car = {
   id: string;
@@ -58,6 +60,11 @@ export default async function DashboardPage({
           <p className="text-muted-foreground">
             {cars.length} {cars.length === 1 ? 'coche' : 'coches'} en tu garaje.
           </p>
+          <Button asChild size="icon" className="mt-4">
+            <Link href="/dashboard/cars/new">
+              <Plus className="h-4 w-4" />
+            </Link>
+          </Button>
         </div>
       </div>
       

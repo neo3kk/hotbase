@@ -12,6 +12,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger, AlertDialogFooter, AlertDialogCancel } from '@/components/ui/alert-dialog';
 import Image from 'next/image';
 
+import { X } from 'lucide-react';
+
 const initialState = { message: '', error: false };
 
 function SubmitButton() {
@@ -167,7 +169,6 @@ export function AddCarForm() {
             <div className="grid gap-2">
               <Label htmlFor="images">Imágenes</Label>
               <div className="flex gap-2">
-                <Input id="images" name="images" type="file" multiple />
                 <AlertDialog open={isCameraModalOpen} onOpenChange={setIsCameraModalOpen}>
                   <AlertDialogTrigger asChild>
                     <Button type="button" variant="outline">Hacer Foto</Button>
@@ -186,7 +187,18 @@ export function AddCarForm() {
               {capturedImage && (
                 <div className="mt-4">
                   <Label>Vista Previa:</Label>
-                  <Image src={capturedImage} alt="Captured image preview" width={150} height={150} className="rounded-md border mt-2" />
+                  <div className="relative w-fit mt-2">
+                    <Image src={capturedImage} alt="Captured image preview" width={150} height={150} className="rounded-md border" />
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="icon"
+                      className="absolute top-1 right-1 h-6 w-6"
+                      onClick={() => setCapturedImage(null)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               )}
             </div>

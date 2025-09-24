@@ -43,7 +43,7 @@ export async function Header() {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem asChild><Link href="/dashboard">Dashboard</Link></DropdownMenuItem>
+                <DropdownMenuItem asChild><Link href="/dashboard">Mi colección</Link></DropdownMenuItem>
                 <DropdownMenuItem asChild><Link href="/dashboard/profile">Mi Perfil</Link></DropdownMenuItem>
                 <DropdownMenuItem asChild><Link href="/dashboard/cars/new">Añadir Coche</Link></DropdownMenuItem>
                 <DropdownMenuSeparator />
