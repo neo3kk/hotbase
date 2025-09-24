@@ -137,20 +137,20 @@ export function AddCarForm() {
         <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6">
           {/* Columna Izquierda */}
           <div className="space-y-4">
-            <div><Label htmlFor="name">Nombre del Coche</Label><Input id="name" name="name" placeholder="'87 Dodge D100" required /></div>
+            <div className="grid gap-2"><Label htmlFor="name">Nombre del Coche</Label><Input id="name" name="name" placeholder="'87 Dodge D100" required /></div>
             <div className="grid grid-cols-2 gap-4">
-              <div><Label htmlFor="model_year">Año del Modelo</Label><Input id="model_year" name="model_year" type="number" placeholder="1987" /></div>
-              <div><Label htmlFor="release_year">Año de Lanzamiento</Label><Input id="release_year" name="release_year" type="number" placeholder="2024" /></div>
+              <div className="grid gap-2"><Label htmlFor="model_year">Año del Modelo</Label><Input id="model_year" name="model_year" type="number" placeholder="1987" /></div>
+              <div className="grid gap-2"><Label htmlFor="release_year">Año de Lanzamiento</Label><Input id="release_year" name="release_year" type="number" placeholder="2024" /></div>
             </div>
-            <div><Label htmlFor="series">Serie</Label><Input id="series" name="series" placeholder="HW Trucks" /></div>
+            <div className="grid gap-2"><Label htmlFor="series">Serie</Label><Input id="series" name="series" placeholder="HW Trucks" /></div>
             <div className="grid grid-cols-2 gap-4">
-              <div><Label htmlFor="collection_number">Número de Colección</Label><Input id="collection_number" name="collection_number" placeholder="5/10" /></div>
-              <div><Label htmlFor="color">Color</Label><Input id="color" name="color" placeholder="Rojo" /></div>
+              <div className="grid gap-2"><Label htmlFor="collection_number">Número de Colección</Label><Input id="collection_number" name="collection_number" placeholder="5/10" /></div>
+              <div className="grid gap-2"><Label htmlFor="color">Color</Label><Input id="color" name="color" placeholder="Rojo" /></div>
             </div>
           </div>
           {/* Columna Derecha */}
           <div className="space-y-4">
-            <div>
+            <div className="grid gap-2">
               <Label htmlFor="condition">Condición</Label>
               <Select name="condition" defaultValue="en-blister">
                 <SelectTrigger><SelectValue placeholder="Selecciona una condición" /></SelectTrigger>
@@ -162,9 +162,9 @@ export function AddCarForm() {
                 </SelectContent>
               </Select>
             </div>
-            <div><Label htmlFor="purchase_price">Precio de Compra (€)</Label><Input id="purchase_price" name="purchase_price" type="number" step="0.01" placeholder="2.99" /></div>
-            <div><Label htmlFor="notes">Notas</Label><Textarea id="notes" name="notes" placeholder="Comprado en El Corte Inglés..." /></div>
-            <div>
+            <div className="grid gap-2"><Label htmlFor="purchase_price">Precio de Compra (€)</Label><Input id="purchase_price" name="purchase_price" type="number" step="0.01" placeholder="2.99" /></div>
+            <div className="grid gap-2"><Label htmlFor="notes">Notas</Label><Textarea id="notes" name="notes" placeholder="Comprado en El Corte Inglés..." /></div>
+            <div className="grid gap-2">
               <Label htmlFor="images">Imágenes</Label>
               <div className="flex gap-2">
                 <Input id="images" name="images" type="file" multiple />

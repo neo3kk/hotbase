@@ -43,7 +43,7 @@ export function LoginForm() {
           <CardTitle className="text-2xl">Login</CardTitle>
           <CardDescription>Introduce tu email para acceder a tu colección.</CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-4">
+        <CardContent className="grid gap-4 pb-4">
           <div className="grid gap-2"><Label htmlFor="email">Email</Label><Input id="email" name="email" type="email" required /></div>
           <div className="grid gap-2"><Label htmlFor="password">Contraseña</Label><Input id="password" name="password" type="password" required /></div>
         </CardContent>

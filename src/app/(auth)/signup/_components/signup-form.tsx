@@ -44,7 +44,7 @@ export function SignUpForm() {
           <CardTitle className="text-2xl">Registro</CardTitle>
           <CardDescription>Introduce tus datos para unirte a hotbase.</CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-4">
+        <CardContent className="grid gap-4 pb-4">
           <div className="grid gap-2"><Label htmlFor="username">Nombre de usuario</Label><Input id="username" name="username" required /></div>
           <div className="grid gap-2"><Label htmlFor="email">Email</Label><Input id="email" name="email" type="email" required /></div>
           <div className="grid gap-2"><Label htmlFor="password">Contraseña</Label><Input id="password" name="password" type="password" required minLength={6} /></div>

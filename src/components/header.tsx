@@ -1,6 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
-import { Button } from "./ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,15 +10,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { UserAvatar } from "./user-avatar";
 import { LogoutButton } from "./logout-button";
-import { headers } from "next/headers";
 import Image from "next/image";
 
 export async function Header() {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  const pathname = headers().get("next-url");
-
-  const hideAuthButtons = !user && (pathname === "/login" || pathname === "/signup");
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 py-4 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -33,7 +28,7 @@ export async function Header() {
         
         {/* Lado Derecho: Acciones de Usuario */}
         <div className="flex items-center gap-2">
-          {user ? (
+          {user && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="flex items-center gap-2 rounded-full transition-opacity hover:opacity-80">
@@ -55,13 +50,6 @@ export async function Header() {
                 <DropdownMenuItem className="p-0"><LogoutButton /></DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-          ) : (
-            !hideAuthButtons && (
-              <nav className="flex items-center gap-2">
-                <Button asChild variant="ghost"><Link href="/login">Iniciar Sesión</Link></Button>
-                <Button asChild><Link href="/signup">Registrarse</Link></Button>
-              </nav>
-            )
           )}
         </div>
       </div>

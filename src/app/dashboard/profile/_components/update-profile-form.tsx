@@ -37,11 +37,11 @@ export function UpdateProfileForm({ profile }: { profile: Tables<'profiles'> }) 
           <CardTitle>Información Pública</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div>
+          <div className="grid gap-2">
             <Label htmlFor="username">Nombre de Usuario</Label>
             <Input id="username" name="username" defaultValue={profile.username} required />
           </div>
-          <div>
+          <div className="grid gap-2">
             <Label htmlFor="avatar">Avatar</Label>
             <Input id="avatar" name="avatar" type="file" />
             <p className="text-sm text-gray-500 mt-2">Sube una imagen para tu foto de perfil.</p>
