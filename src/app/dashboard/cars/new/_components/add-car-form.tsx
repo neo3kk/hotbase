@@ -139,14 +139,15 @@ export function AddCarForm() {
         <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6">
           {/* Columna Izquierda */}
           <div className="space-y-4">
-            <div className="grid gap-2"><Label htmlFor="name">Nombre del Coche</Label><Input id="name" name="name" placeholder="'87 Dodge D100" required /></div>
+            <div className="grid gap-2"><Label htmlFor="model">Modelo del Coche</Label><Input id="model" name="model" placeholder="'87 Dodge D100" required /></div>
+            <div className="grid gap-2"><Label htmlFor="toy_num">Número de Juguete</Label><Input id="toy_num" name="toy_num" placeholder="R0916" /></div>
             <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2"><Label htmlFor="model_year">Año del Modelo</Label><Input id="model_year" name="model_year" type="number" placeholder="1987" /></div>
+              <div className="grid gap-2"><Label htmlFor="year">Año</Label><Input id="year" name="year" type="number" placeholder="1987" /></div>
               <div className="grid gap-2"><Label htmlFor="release_year">Año de Lanzamiento</Label><Input id="release_year" name="release_year" type="number" placeholder="2024" /></div>
             </div>
             <div className="grid gap-2"><Label htmlFor="series">Serie</Label><Input id="series" name="series" placeholder="HW Trucks" /></div>
             <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2"><Label htmlFor="collection_number">Número de Colección</Label><Input id="collection_number" name="collection_number" placeholder="5/10" /></div>
+              <div className="grid gap-2"><Label htmlFor="series_num">Número de Serie</Label><Input id="series_num" name="series_num" placeholder="5/10" /></div>
               <div className="grid gap-2"><Label htmlFor="color">Color</Label><Input id="color" name="color" placeholder="Rojo" /></div>
             </div>
           </div>
