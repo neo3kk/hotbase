@@ -4,6 +4,12 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
+        hostname: 'zxlfqeittccgunvpfpnd.supabase.co',
+        port: '',
+        pathname: '/storage/v1/**',
+      },
+      {
+        protocol: 'https',
         hostname: 'izntndbzqbiwssduoxjw.supabase.co',
         port: '',
         // Este pathname permite cualquier ruta dentro del storage

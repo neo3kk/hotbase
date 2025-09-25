@@ -3,6 +3,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { supabaseAdmin } from '@/lib/supabase/admin';
+import { redirect } from 'next/navigation';
 
 const profileSchema = z.object({
   username: z.string().min(3, { message: "El nombre de usuario debe tener al menos 3 caracteres." }),
@@ -34,8 +36,8 @@ export async function updateProfile(_prevState: unknown, formData: FormData) {
   const avatarFile = formData.get('avatar') as File;
   if (avatarFile && avatarFile.size > 0) {
     const fileExt = avatarFile.name.split('.').pop();
-    const fileName = `${user.id}.${fileExt}`;
-    const filePath = `${fileName}`;
+    // Construct the path to be user-id/avatar.ext to comply with RLS policy
+    const filePath = `${user.id}/avatar.${fileExt}`;
 
     const { error: storageError } = await supabase.storage
       .from('avatars')
@@ -69,4 +71,69 @@ export async function updateProfile(_prevState: unknown, formData: FormData) {
   revalidatePath('/dashboard/profile');
   revalidatePath('/dashboard');
   return { message: "Perfil actualizado con éxito.", error: false };
+}
+
+export async function deleteProfile() {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    throw new Error('User not found.');
+  }
+
+  const userId = user.id;
+
+  // --- 1. Delete files from storage ---
+  try {
+    // List and delete files from the 'avatars' bucket
+    const { data: avatarFiles, error: avatarListError } = await supabaseAdmin.storage.from('avatars').list(userId);
+    if (avatarListError) throw avatarListError;
+    if (avatarFiles && avatarFiles.length > 0) {
+      const filesToRemove = avatarFiles.map((file) => `${userId}/${file.name}`);
+      await supabaseAdmin.storage.from('avatars').remove(filesToRemove);
+    }
+
+    // --- Correctly delete files from the 'car-images' bucket ---
+    // 1. Get all image URLs from the database for the user
+    const { data: carImageRecords, error: dbError } = await supabaseAdmin
+      .from('car_images')
+      .select('image_url')
+      .eq('user_id', userId);
+
+    if (dbError) {
+      console.error('Error fetching car image records:', dbError);
+      throw new Error('Could not fetch car images for cleanup.');
+    }
+
+    if (carImageRecords && carImageRecords.length > 0) {
+      // 2. Parse the storage path from each URL
+      const bucketUrlPart = `/storage/v1/object/public/car-images/`;
+      const filesToRemove = carImageRecords.map(record => {
+        const url = new URL(record.image_url);
+        return url.pathname.substring(url.pathname.indexOf(bucketUrlPart) + bucketUrlPart.length);
+      });
+
+      // 3. Remove the files from storage
+      const { error: removeError } = await supabaseAdmin.storage.from('car-images').remove(filesToRemove);
+      if (removeError) {
+        console.error('Error removing car images from storage:', removeError);
+        // Do not throw an error here, allow user deletion to proceed anyway
+      }
+    }
+
+  } catch (storageError) {
+    console.error('Error deleting storage objects:', storageError);
+    throw new Error('Could not clean up user files.');
+  }
+
+  // --- 2. Delete the user from auth ---
+  const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(userId);
+  if (deleteError) {
+    console.error('Error deleting user:', deleteError);
+    throw new Error('Could not delete user.');
+  }
+
+  // --- 3. Sign out and redirect ---
+  await supabase.auth.signOut();
+  redirect('/');
 }

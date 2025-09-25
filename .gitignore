@@ -42,3 +42,9 @@ next-env.d.ts
 
 #gemini
 GEMINI.md
+
+#esquema BDD
+schema.sql
+
+#ERRORLOG
+error.log

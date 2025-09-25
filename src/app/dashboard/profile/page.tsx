@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import { UpdateProfileForm } from "./_components/update-profile-form";
 import { UserAvatar } from "@/components/user-avatar";
+import { DeleteProfileButton } from "./_components/delete-profile-button";
 
 export default async function ProfilePage() {
   const supabase = createClient();
@@ -33,6 +34,14 @@ export default async function ProfilePage() {
         </p>
       </div>
       <UpdateProfileForm profile={profile} />
+
+      <div className="mt-8 pt-8 border-t border-red-500/30">
+        <h2 className="text-lg font-semibold text-red-500">Zona de Peligro</h2>
+        <p className="text-sm text-gray-400 mb-4">
+          Estas acciones son destructivas y no se pueden revertir.
+        </p>
+        <DeleteProfileButton />
+      </div>
     </div>
   );
 }
