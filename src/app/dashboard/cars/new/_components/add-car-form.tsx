@@ -14,6 +14,44 @@ import Image from 'next/image';
 
 import { X } from 'lucide-react';
 
+interface PuterUser {
+  username: string;
+  // Add other user properties if needed
+}
+
+interface PuterAuth {
+  isSignedIn(): Promise<boolean>;
+  signIn(): Promise<PuterUser>;
+}
+
+interface PuterAI {
+  img2txt(image: string): Promise<OcrResponse | string>;
+}
+
+interface OcrResponse {
+  success: boolean;
+  service: {
+    name: string;
+  };
+  result: {
+    blocks: OcrBlock[];
+  };
+  metadata: any;
+}
+
+interface OcrBlock {
+  type: string;
+  confidence: number;
+  text: string;
+}
+
+interface Puter {
+  auth: PuterAuth;
+  ai: PuterAI;
+}
+
+declare const puter: Puter;
+
 const initialState = { message: '', error: false };
 
 function SubmitButton() {
@@ -27,12 +65,291 @@ export function AddCarForm() {
   const [isCameraModalOpen, setIsCameraModalOpen] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [name, setName] = useState('');
+  const [collectionOrSeriesName, setCollectionOrSeriesName] = useState('');
+  const [modelYear, setModelYear] = useState('');
+  const [seriesNumber, setSeriesNumber] = useState('');
+  const [yearlyCollectionNumber, setYearlyCollectionNumber] = useState('');
+  const [color, setColor] = useState('');
+  const [isPuterAuthenticated, setIsPuterAuthenticated] = useState(false);
+  const puterLoginBtnRef = useRef<HTMLButtonElement>(null);
+  const [allCars, setAllCars] = useState<any[]>([]);
+
+  const normalizeText = (text: string): string => {
+    return text
+      .toLowerCase()
+      .replace(/[^a-z0-9\s\/]/g, '') // Allow '/' character
+      .replace(/\s+/g, ' ') // Replace multiple spaces with single space
+      .trim();
+  };
+
+  const parseOcrText = (textLines: string[]) => {
+    let seriesNumberRegex = /(\d+)\/(\d+)/g;
+    const yearlyCollectionNumberRegex = /^[1-9]\d{0,2}\/\d{3}$/;
+    const modelYearRegex = /\b(19|20)\d{2}\b/;
+
+    let seriesNumber: string | null = null;
+    let yearlyCollectionNumber: string | null = null;
+    let modelYear: string | null = null;
+    let collectionOrSeriesName: string | null = null; // This will be populated from bestMatch
+    const potentialNames: string[] = [];
+
+    const normalizedTextLines = textLines.map(line => normalizeText(line));
+
+    for (const line of normalizedTextLines) {
+      let match;
+      let hasMatch = false;
+
+      // Try to match yearly collection number first (more specific regex)
+      const yearlyMatch = line.match(yearlyCollectionNumberRegex);
+      if (yearlyMatch) {
+        yearlyCollectionNumber = yearlyMatch[0];
+        hasMatch = true;
+      }
+
+      // Then try to match general series number if not already matched by yearly
+      if (!hasMatch) {
+        seriesNumberRegex.lastIndex = 0; // Reset regex lastIndex for global regexes
+        while ((match = seriesNumberRegex.exec(line)) !== null) {
+          hasMatch = true;
+          // Only assign to seriesNumber if it's not already a yearlyCollectionNumber
+          if (!yearlyCollectionNumber || match[0] !== yearlyCollectionNumber) {
+            seriesNumber = match[0];
+          }
+        }
+      }
+      if (hasMatch) continue;
+
+      const modelYearMatch = line.match(modelYearRegex);
+      if (modelYearMatch) {
+        modelYear = modelYearMatch[0];
+        continue;
+      }
+
+      // Heuristic for collection/series name: if it's mostly letters and spaces, and not a number
+      if (line.length > 3 && line.match(/^[a-z\s\-]+$/) && !line.match(/\d/)) {
+        collectionOrSeriesName = line;
+      }
+      potentialNames.push(line);
+    }
+
+    // Now, find the best match from the potential names
+    console.log("allCars length:", allCars.length);
+    console.log("allCars content:", allCars);
+    if (!allCars.length) return { seriesNumber, yearlyCollectionNumber, modelYear, collectionOrSeriesName: null };
+
+    let bestMatch = null;
+    let maxScore = 0;
+
+    for (const car of allCars) {
+      if (!car.name) continue;
+      let score = 0;
+      const carNameLower = normalizeText(car.name);
+      const carCollectionOrSeriesNameLower = normalizeText(car.collection_or_series_name || '');
+
+      console.log(`--- Car: ${car.name} ---`);
+      console.log(`Normalized Car Name: ${carNameLower}`);
+      console.log(`Normalized Car Collection/Series Name: ${carCollectionOrSeriesNameLower}`);
+
+      let foundName = false;
+      let foundSeries = false;
+
+      for (const line of normalizedTextLines) {
+        if (line === carNameLower) {
+          foundName = true;
+          score += 100; // Very high score for exact name match
+          console.log(`Exact name match for ${car.name} with line: ${line}. Score: ${score}`);
+        }
+        if (carCollectionOrSeriesNameLower && line === carCollectionOrSeriesNameLower) {
+          foundSeries = true;
+          score += 80; // High score for exact collection/series name match
+          console.log(`Exact collection/series name match for ${car.name} with line: ${line}. Score: ${score}`);
+        }
+      }
+
+      if (foundName && foundSeries) {
+        score += 50; // Bonus for finding both name and series exactly
+        console.log(`Bonus for exact name and series match. Score: ${score}`);
+      }
+
+      if (score >= 80) { // If exact match found for name or collection/series, this is likely the best match
+        if (score > maxScore) {
+          maxScore = score;
+          bestMatch = car;
+        }
+        console.log(`Best match updated to ${car.name} with score ${score} (exact match).`);
+        continue; // Move to next car
+      }
+
+      for (const line of normalizedTextLines) {
+        // Name matching (fuzzy)
+        const distanceName = levenshtein(line, carNameLower);
+        const similarityName = 1 - (distanceName / Math.max(line.length, carNameLower.length));
+        console.log(`  Line: "${line}" vs Car Name: "${carNameLower}" -> Similarity: ${(similarityName * 100).toFixed(2)}%`);
+        if (similarityName > 0.7) { // 70% similarity for name
+          score += similarityName * 10;
+          console.log(`Fuzzy name match for ${car.name} with line: ${line}. Similarity: ${similarityName.toFixed(2)}. Score: ${score}`);
+        }
+
+        if (carCollectionOrSeriesNameLower) {
+          const distanceCollectionOrSeries = levenshtein(line, carCollectionOrSeriesNameLower);
+          const similarityCollectionOrSeries = 1 - (distanceCollectionOrSeries / Math.max(line.length, carCollectionOrSeriesNameLower.length));
+          console.log(`  Line: "${line}" vs Car Series: "${carCollectionOrSeriesNameLower}" -> Similarity: ${(similarityCollectionOrSeries * 100).toFixed(2)}%`);
+          if (similarityCollectionOrSeries > 0.7) {
+            score += similarityCollectionOrSeries * 5;
+            console.log(`Fuzzy collection/series name match for ${car.name} with line: ${line}. Similarity: ${similarityCollectionOrSeries.toFixed(2)}. Score: ${score}`);
+          }
+        } else {
+          console.log(`  Car Series is empty for ${car.name}, skipping series fuzzy match.`);
+        }
+      }
+
+      if (score > maxScore) {
+        maxScore = score;
+        bestMatch = car;
+        console.log(`Best match updated to ${car.name} with score ${score} (fuzzy match).`);
+      }
+    }
+
+    console.log(`Final best match: ${bestMatch?.name || 'None'} with max score: ${maxScore}`);
+    if (maxScore < 20) {
+      bestMatch = null;
+    }
+
+    return { bestMatch, seriesNumber, yearlyCollectionNumber, modelYear, collectionOrSeriesName: bestMatch?.collection_or_series_name || null };
+  };
+
+  const resizeImage = (dataUrl: string, maxWidth = 600): Promise<string> => {
+    return new Promise((resolve) => {
+      const img = document.createElement('img');
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        let { width, height } = img;
+
+        if (width > maxWidth) {
+          height = (maxWidth / width) * height;
+          width = maxWidth;
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        ctx?.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', 0.7)); // Reduced quality to 70%
+      };
+      img.src = dataUrl;
+    });
+  };
+
+  useEffect(() => {
+    fetch('/all_cars.json')
+      .then(response => response.json())
+      .then(data => setAllCars(data));
+  }, []);
 
   useEffect(() => {
     if (state?.message && state.error) {
       toast.error(state.message);
     }
   }, [state]);
+
+  useEffect(() => {
+    const checkPuterAuth = async () => {
+      if (typeof puter !== 'undefined') {
+        const signedIn = await puter.auth.isSignedIn();
+        if (signedIn) {
+          setIsPuterAuthenticated(true);
+        }
+      }
+    };
+    checkPuterAuth();
+  }, []);
+
+  useEffect(() => {
+    const loginBtn = puterLoginBtnRef.current;
+    const handlePuterLogin = () => {
+      if (typeof puter !== 'undefined') {
+        puter.auth.signIn()
+          .then((user) => {
+            if (user) {
+              setIsPuterAuthenticated(true);
+              toast.success("¡Autenticado con Puter!");
+            }
+          })
+          .catch((error) => {
+            console.error("Puter login error:", error);
+            toast.error("Error al iniciar sesión con Puter.");
+          });
+      }
+    };
+
+    if (loginBtn) {
+      loginBtn.addEventListener('click', handlePuterLogin);
+    }
+
+    return () => {
+      if (loginBtn) {
+        loginBtn.removeEventListener('click', handlePuterLogin);
+      }
+    };
+  }, [puterLoginBtnRef]);
+
+
+
+  const handleOcr = async () => {
+    console.log("handleOcr called");
+    if (!isPuterAuthenticated) {
+      toast.error("Por favor, inicia sesión con Puter para usar la IA.");
+      return;
+    }
+
+    if (!capturedImage) {
+      toast.error("Por favor, primero captura o sube una imagen.");
+      return;
+    }
+
+    toast.info("Leyendo datos de la imagen con IA...");
+
+    try {
+      const response = await puter.ai.img2txt(capturedImage);
+      console.log("OCR Response:", response);
+
+      let lines: string[] = [];
+      if (typeof response === 'string') {
+        lines = response.split('\n');
+      } else if (response.success) {
+        lines = response.result.blocks
+          .filter(block => block.type === 'text/textract:LINE')
+          .map(block => block.text);
+      }
+
+      console.log("OCR Lines:", lines);
+      const { bestMatch, seriesNumber, yearlyCollectionNumber, modelYear: parsedModelYear } = parseOcrText(lines);
+      console.log("Parsed OCR data:", { bestMatch, seriesNumber, yearlyCollectionNumber, parsedModelYear });
+
+      if (bestMatch) {
+        setName(bestMatch.name || '');
+        setCollectionOrSeriesName(bestMatch.collection_or_series_name || '');
+        setModelYear(parsedModelYear || bestMatch.model_year || '');
+        setSeriesNumber(seriesNumber || '');
+        setYearlyCollectionNumber(yearlyCollectionNumber || '');
+        setColor(bestMatch.color || '');
+        toast.success("¡Formulario autocompletado con el coche encontrado!");
+      } else if (seriesNumber || yearlyCollectionNumber || parsedModelYear) {
+        setModelYear(parsedModelYear || '');
+        setSeriesNumber(seriesNumber || '');
+        setYearlyCollectionNumber(yearlyCollectionNumber || '');
+        toast.info("Se encontraron algunos datos, pero no se pudo identificar el coche.");
+      } else {
+        toast.warning("No se encontró un coche coincidente en la base de datos.");
+      }
+    } catch (error) {
+      console.error("OCR Error:", error);
+      toast.error("Error al leer los datos de la imagen.");
+    }
+  };
 
   const startCamera = async () => {
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
@@ -104,8 +421,24 @@ export function AddCarForm() {
       const context = canvas.getContext('2d');
       context?.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
       const dataUrl = canvas.toDataURL('image/webp');
-      setCapturedImage(dataUrl);
+      resizeImage(dataUrl).then(resizedDataUrl => {
+        setCapturedImage(resizedDataUrl);
+      });
       setIsCameraModalOpen(false); // Close the modal
+    }
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const dataUrl = e.target?.result as string;
+        resizeImage(dataUrl).then(resizedDataUrl => {
+          setCapturedImage(resizedDataUrl);
+        });
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -139,13 +472,14 @@ export function AddCarForm() {
         <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6">
           {/* Columna Izquierda */}
           <div className="space-y-4">
-            <div className="grid gap-2"><Label htmlFor="name">Nombre del Coche</Label><Input id="name" name="name" placeholder="'87 Dodge D100" required /></div>
-            <div className="grid gap-2"><Label htmlFor="collection_number">Número de Colección</Label><Input id="collection_number" name="collection_number" placeholder="R0916" /></div>
+            <div className="grid gap-2"><Label htmlFor="name">Nombre del Coche</Label><Input id="name" name="name" placeholder="'87 Dodge D100" required value={name} onChange={(e) => setName(e.target.value)} /></div>
+            <div className="grid gap-2"><Label htmlFor="collection_or_series_name">Nombre de la Colección/Serie</Label><Input id="collection_or_series_name" name="collection_or_series_name" placeholder="Hot Wheels Mainline" value={collectionOrSeriesName} onChange={(e) => setCollectionOrSeriesName(e.target.value)} /></div>
             <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2"><Label htmlFor="model_year">Año del Modelo</Label><Input id="model_year" name="model_year" type="number" placeholder="1987" /></div>
+              <div className="grid gap-2"><Label htmlFor="model_year">Año del Modelo</Label><Input id="model_year" name="model_year" type="number" placeholder="1987" value={modelYear} onChange={(e) => setModelYear(e.target.value)} /></div>
             </div>
-            <div className="grid gap-2"><Label htmlFor="series">Serie</Label><Input id="series" name="series" placeholder="HW Trucks" /></div>
-            <div className="grid gap-2"><Label htmlFor="color">Color</Label><Input id="color" name="color" placeholder="Rojo" /></div>
+            <div className="grid gap-2"><Label htmlFor="series_number">Número de Serie</Label><Input id="series_number" name="series_number" placeholder="3/10" value={seriesNumber} onChange={(e) => setSeriesNumber(e.target.value)} /></div>
+            <div className="grid gap-2"><Label htmlFor="yearly_collection_number">Número de Colección Anual</Label><Input id="yearly_collection_number" name="yearly_collection_number" placeholder="155/256" value={yearlyCollectionNumber} onChange={(e) => setYearlyCollectionNumber(e.target.value)} /></div>
+            <div className="grid gap-2"><Label htmlFor="color">Color</Label><Input id="color" name="color" placeholder="Rojo" value={color} onChange={(e) => setColor(e.target.value)} /></div>
           </div>
           {/* Columna Derecha */}
           <div className="space-y-4">
@@ -180,6 +514,10 @@ export function AddCarForm() {
                     </AlertDialogFooter>
                   </AlertDialogContent>
                 </AlertDialog>
+                <Label htmlFor="file-upload" className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50 h-9 px-4 py-2 has-[>svg]:px-3 cursor-pointer">
+                  Subir Foto
+                </Label>
+                <Input id="file-upload" type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
               </div>
               {capturedImage && (
                 <div className="mt-4">
@@ -196,6 +534,11 @@ export function AddCarForm() {
                       <X className="h-4 w-4" />
                     </Button>
                   </div>
+                  {!isPuterAuthenticated ? (
+                    <Button ref={puterLoginBtnRef} type="button" className="mt-2">Login con Puter para usar IA</Button>
+                  ) : (
+                    <Button type="button" onClick={handleOcr} className="mt-2">Auto-rellenar con IA</Button>
+                  )}
                 </div>
               )}
             </div>

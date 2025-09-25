@@ -17,6 +17,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es" className="dark" style={{ colorScheme: 'dark' }}>
+      <head>
+        <script src="https://js.puter.com/v2/"></script>
+      </head>
       <body className={`${inter.className} flex flex-col min-h-screen bg-background`}>
         <main className="flex-grow flex flex-col">
           <div className="w-full max-w-screen-xl mx-auto px-4">
