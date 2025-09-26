@@ -1,7 +1,7 @@
 'use client';
 
 import { useFormState, useFormStatus } from 'react-dom';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { editCar } from '../actions';
 import { toast } from 'sonner';
 
@@ -23,6 +23,14 @@ function SubmitButton() {
 export function EditCarForm({ car }: { car: Tables<'cars'> }) {
   const editCarWithId = editCar.bind(null, car.id);
   const [state, formAction] = useFormState(editCarWithId, initialState);
+  const [allCollections, setAllCollections] = useState<string[]>([]);
+
+  useEffect(() => {
+    fetch('/colecciones.json')
+      .then(response => response.json())
+      .then(data => setAllCollections(data))
+      .catch(error => console.error("Error fetching colecciones.json:", error));
+  }, []);
 
   useEffect(() => {
     if (state?.message) {
@@ -41,7 +49,15 @@ export function EditCarForm({ car }: { car: Tables<'cars'> }) {
           {/* Columna Izquierda */}
           <div className="space-y-4">
             <div className="grid gap-2"><Label htmlFor="name">Nombre del Coche</Label><Input id="name" name="name" defaultValue={car.name} required /></div>
-            <div className="grid gap-2"><Label htmlFor="collection_or_series_name">Nombre de la Colección/Serie</Label><Input id="collection_or_series_name" name="collection_or_series_name" defaultValue={car.collection_or_series_name ?? ''} /></div>
+            <div className="grid gap-2">
+              <Label htmlFor="collection_or_series_name">Nombre de la Colección/Serie</Label>
+              <Input id="collection_or_series_name" name="collection_or_series_name" defaultValue={car.collection_or_series_name ?? ''} list="collections-list" />
+              <datalist id="collections-list">
+                {allCollections.map((collection) => (
+                  <option key={collection} value={collection} />
+                ))}
+              </datalist>
+            </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2"><Label htmlFor="model_year">Año del Modelo</Label><Input id="model_year" name="model_year" type="number" defaultValue={car.model_year ?? ''} /></div>
             </div>

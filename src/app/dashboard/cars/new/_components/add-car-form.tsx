@@ -76,10 +76,39 @@ export function AddCarForm() {
   const [isPuterAuthenticated, setIsPuterAuthenticated] = useState(false);
   const puterLoginBtnRef = useRef<HTMLButtonElement>(null);
   const [allCars, setAllCars] = useState<any[]>([]);
+  const [allCollections, setAllCollections] = useState<string[]>([]);
   const [isCarDataLoading, setIsCarDataLoading] = useState(true);
   const [isOcrRunning, setIsOcrRunning] = useState(false);
 
+  useEffect(() => {
+    setIsCarDataLoading(true);
+    Promise.all([
+      fetch('/all_cars.json').then(res => {
+        if (!res.ok) throw new Error('Network response was not ok for all_cars.json');
+        return res.json();
+      }),
+      fetch('/colecciones.json').then(res => {
+        if (!res.ok) throw new Error('Network response was not ok for colecciones.json');
+        return res.json();
+      })
+    ])
+    .then(([carsData, collectionsData]) => {
+      setAllCars(carsData);
+      setAllCollections(collectionsData);
+    })
+    .catch(error => {
+      console.error("Error fetching data:", error);
+      toast.error("No se pudieron cargar los datos necesarios para el formulario.");
+    })
+    .finally(() => {
+      setIsCarDataLoading(false);
+    });
+  }, []);
+
   const normalizeText = (text: string): string => {
+    if (typeof text !== 'string') {
+        return ''; // Return an empty string if text is not a string
+    }
     return text
       .toLowerCase()
       .replace(/[^a-z0-9\s\/-]/g, '') // Allow '/' and '-' characters
@@ -166,16 +195,16 @@ export function AddCarForm() {
     let maxScore = 0;
 
     for (const car of allCars) {
-      if (!car.name) continue;
-      let score = 0;
-      const carNameLower = normalizeText(car.name);
-      const carCollectionOrSeriesNameLower = normalizeText(car.collection_or_series_name || '');
+        if (!car.model || !Array.isArray(car.model) || car.model.length === 0) continue;
+        let score = 0;
+        const carNameLower = normalizeText(car.model[0]);
+        const carCollectionOrSeriesNameLower = normalizeText((car.series && Array.isArray(car.series) && car.series[0]) || '');
 
       let foundName = false;
       let foundSeries = false;
 
       for (const line of normalizedTextLines) {
-        if (line === carNameLower) {
+        if (carNameLower && line === carNameLower) {
           foundName = true;
           score += 100; // Very high score for exact name match
         }
@@ -202,14 +231,14 @@ export function AddCarForm() {
         const distanceName = levenshtein(line, carNameLower);
         const similarityName = 1 - (distanceName / Math.max(line.length, carNameLower.length));
         if (similarityName > 0.7) { // 70% similarity for name
-          score += similarityName * 10;
+          score += similarityName * 30;
         }
 
         if (carCollectionOrSeriesNameLower) {
           const distanceCollectionOrSeries = levenshtein(line, carCollectionOrSeriesNameLower);
           const similarityCollectionOrSeries = 1 - (distanceCollectionOrSeries / Math.max(line.length, carCollectionOrSeriesNameLower.length));
           if (similarityCollectionOrSeries > 0.7) {
-            score += similarityCollectionOrSeries * 5;
+            score += similarityCollectionOrSeries * 20;
           }
         }
       }
@@ -221,12 +250,12 @@ export function AddCarForm() {
     }
 
     const MIN_MATCH_SCORE = 30; // Threshold for considering a match valid
-    console.log(`Final best match: ${bestMatch?.name || 'None'} with max score: ${maxScore}`);
+    console.log(`Final best match: ${bestMatch?.model?.[0] || 'None'} with max score: ${maxScore}`);
     if (maxScore < MIN_MATCH_SCORE) {
       bestMatch = null;
     }
 
-    return { bestMatch, seriesNumber, yearlyCollectionNumber, modelYear, collectionOrSeriesName: bestMatch?.collection_or_series_name || null };
+    return { bestMatch, seriesNumber, yearlyCollectionNumber, modelYear, collectionOrSeriesName: (bestMatch?.series && bestMatch.series[0]) || null };
   };
 
   const resizeImage = (dataUrl: string, maxWidth = 600): Promise<string> => {
@@ -250,27 +279,6 @@ export function AddCarForm() {
       img.src = dataUrl;
     });
   };
-
-  useEffect(() => {
-    setIsCarDataLoading(true);
-    fetch('/all_cars.json')
-      .then(response => {
-        if (!response.ok) {
-          throw new Error('Network response was not ok');
-        }
-        return response.json();
-      })
-      .then(data => {
-        setAllCars(data);
-      })
-      .catch(error => {
-        console.error("Error fetching all_cars.json:", error);
-        toast.error("No se pudo cargar la base de datos de coches.");
-      })
-      .finally(() => {
-        setIsCarDataLoading(false);
-      });
-  }, []);
 
   useEffect(() => {
     if (state?.message && state.error) {
@@ -364,8 +372,8 @@ export function AddCarForm() {
 
       if (bestMatch) {
         // If a good match is found, populate all its data
-        setName(bestMatch.name || '');
-        setCollectionOrSeriesName(bestMatch.collection_or_series_name || '');
+        setName((bestMatch.model && bestMatch.model[0]) || '');
+        setCollectionOrSeriesName((bestMatch.series && bestMatch.series[0]) || '');
         setModelYear(parsedModelYear || bestMatch.model_year || ''); // OCR year takes precedence
         setColor(bestMatch.color || '');
         toast.success("¡Formulario autocompletado con el coche encontrado!");
@@ -506,7 +514,15 @@ export function AddCarForm() {
           {/* Columna Izquierda */}
           <div className="space-y-4">
             <div className="grid gap-2"><Label htmlFor="name">Nombre del Coche</Label><Input id="name" name="name" placeholder="'87 Dodge D100" required value={name} onChange={(e) => setName(e.target.value)} /></div>
-            <div className="grid gap-2"><Label htmlFor="collection_or_series_name">Nombre de la Colección/Serie</Label><Input id="collection_or_series_name" name="collection_or_series_name" placeholder="Hot Wheels Mainline" value={collectionOrSeriesName} onChange={(e) => setCollectionOrSeriesName(e.target.value)} /></div>
+            <div className="grid gap-2">
+              <Label htmlFor="collection_or_series_name">Nombre de la Colección/Serie</Label>
+              <Input id="collection_or_series_name" name="collection_or_series_name" placeholder="Hot Wheels Mainline" value={collectionOrSeriesName} onChange={(e) => setCollectionOrSeriesName(e.target.value)} list="collections-list" />
+              <datalist id="collections-list">
+                {allCollections.map((collection) => (
+                  <option key={collection} value={collection} />
+                ))}
+              </datalist>
+            </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2"><Label htmlFor="model_year">Año del Modelo</Label><Input id="model_year" name="model_year" type="number" placeholder="1987" value={modelYear} onChange={(e) => setModelYear(e.target.value)} /></div>
             </div>

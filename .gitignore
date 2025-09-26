@@ -48,3 +48,7 @@ schema.sql
 
 #ERRORLOG
 error.log
+
+#Copia all_cars.json
+public/all_cars_copy.json
+
