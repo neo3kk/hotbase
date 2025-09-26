@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
-import type { Tables } from '@/types/supabase'; // Crearemos este tipo a continuación
+import type { Tables } from '@/types/supabase';
 
 const initialState = { message: '', error: false };
 
@@ -21,13 +21,16 @@ function SubmitButton() {
 }
 
 export function EditCarForm({ car }: { car: Tables<'cars'> }) {
-  // Usamos .bind para pasar el ID del coche a la Server Action
   const editCarWithId = editCar.bind(null, car.id);
   const [state, formAction] = useFormState(editCarWithId, initialState);
 
   useEffect(() => {
-    if (state?.message && state.error) {
-      toast.error(state.message);
+    if (state?.message) {
+      if (state.error) {
+        toast.error(state.message);
+      } else {
+        toast.success(state.message);
+      }
     }
   }, [state]);
 
@@ -38,15 +41,13 @@ export function EditCarForm({ car }: { car: Tables<'cars'> }) {
           {/* Columna Izquierda */}
           <div className="space-y-4">
             <div className="grid gap-2"><Label htmlFor="name">Nombre del Coche</Label><Input id="name" name="name" defaultValue={car.name} required /></div>
+            <div className="grid gap-2"><Label htmlFor="collection_or_series_name">Nombre de la Colección/Serie</Label><Input id="collection_or_series_name" name="collection_or_series_name" defaultValue={car.collection_or_series_name ?? ''} /></div>
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2"><Label htmlFor="model_year">Año del Modelo</Label><Input id="model_year" name="model_year" type="number" defaultValue={car.model_year ?? ''} /></div>
-              <div className="grid gap-2"><Label htmlFor="release_year">Año de Lanzamiento</Label><Input id="release_year" name="release_year" type="number" defaultValue={car.release_year ?? ''} /></div>
             </div>
-            <div className="grid gap-2"><Label htmlFor="series">Serie</Label><Input id="series" name="series" defaultValue={car.series ?? ''} /></div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2"><Label htmlFor="collection_number">Número de Colección</Label><Input id="collection_number" name="collection_number" defaultValue={car.collection_number ?? ''} /></div>
-              <div className="grid gap-2"><Label htmlFor="color">Color</Label><Input id="color" name="color" defaultValue={car.color ?? ''} /></div>
-            </div>
+            <div className="grid gap-2"><Label htmlFor="series_number">Número de Serie</Label><Input id="series_number" name="series_number" defaultValue={car.series_number ?? ''} /></div>
+            <div className="grid gap-2"><Label htmlFor="yearly_collection_number">Número de Colección Anual</Label><Input id="yearly_collection_number" name="yearly_collection_number" defaultValue={car.yearly_collection_number ?? ''} /></div>
+            <div className="grid gap-2"><Label htmlFor="color">Color</Label><Input id="color" name="color" defaultValue={car.color ?? ''} /></div>
           </div>
           {/* Columna Derecha */}
           <div className="space-y-4">

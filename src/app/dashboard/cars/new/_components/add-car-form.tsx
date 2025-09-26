@@ -65,7 +65,7 @@ export function AddCarForm() {
   const [isCameraModalOpen, setIsCameraModalOpen] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+ const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [name, setName] = useState('');
   const [collectionOrSeriesName, setCollectionOrSeriesName] = useState('');
@@ -76,13 +76,36 @@ export function AddCarForm() {
   const [isPuterAuthenticated, setIsPuterAuthenticated] = useState(false);
   const puterLoginBtnRef = useRef<HTMLButtonElement>(null);
   const [allCars, setAllCars] = useState<any[]>([]);
+  const [isCarDataLoading, setIsCarDataLoading] = useState(true);
+  const [isOcrRunning, setIsOcrRunning] = useState(false);
 
   const normalizeText = (text: string): string => {
     return text
       .toLowerCase()
-      .replace(/[^a-z0-9\s\/]/g, '') // Allow '/' character
+      .replace(/[^a-z0-9\s\/-]/g, '') // Allow '/' and '-' characters
       .replace(/\s+/g, ' ') // Replace multiple spaces with single space
       .trim();
+  };
+
+  const levenshtein = (a: string, b: string): number => {
+    const matrix = Array(b.length + 1).fill(null).map(() => Array(a.length + 1).fill(null));
+    for (let i = 0; i <= a.length; i += 1) {
+      matrix[0][i] = i;
+    }
+    for (let j = 0; j <= b.length; j += 1) {
+      matrix[j][0] = j;
+    }
+    for (let j = 1; j <= b.length; j += 1) {
+      for (let i = 1; i <= a.length; i += 1) {
+        const indicator = a[i - 1] === b[j - 1] ? 0 : 1;
+        matrix[j][i] = Math.min(
+          matrix[j][i - 1] + 1, // deletion
+          matrix[j - 1][i] + 1, // insertion
+          matrix[j - 1][i - 1] + indicator, // substitution
+        );
+      }
+    }
+    return matrix[b.length][a.length];
   };
 
   const parseOcrText = (textLines: string[]) => {
@@ -137,8 +160,7 @@ export function AddCarForm() {
 
     // Now, find the best match from the potential names
     console.log("allCars length:", allCars.length);
-    console.log("allCars content:", allCars);
-    if (!allCars.length) return { seriesNumber, yearlyCollectionNumber, modelYear, collectionOrSeriesName: null };
+    if (!allCars.length) return { bestMatch: null, seriesNumber, yearlyCollectionNumber, modelYear, collectionOrSeriesName: null };
 
     let bestMatch = null;
     let maxScore = 0;
@@ -149,10 +171,6 @@ export function AddCarForm() {
       const carNameLower = normalizeText(car.name);
       const carCollectionOrSeriesNameLower = normalizeText(car.collection_or_series_name || '');
 
-      console.log(`--- Car: ${car.name} ---`);
-      console.log(`Normalized Car Name: ${carNameLower}`);
-      console.log(`Normalized Car Collection/Series Name: ${carCollectionOrSeriesNameLower}`);
-
       let foundName = false;
       let foundSeries = false;
 
@@ -160,18 +178,15 @@ export function AddCarForm() {
         if (line === carNameLower) {
           foundName = true;
           score += 100; // Very high score for exact name match
-          console.log(`Exact name match for ${car.name} with line: ${line}. Score: ${score}`);
         }
         if (carCollectionOrSeriesNameLower && line === carCollectionOrSeriesNameLower) {
           foundSeries = true;
           score += 80; // High score for exact collection/series name match
-          console.log(`Exact collection/series name match for ${car.name} with line: ${line}. Score: ${score}`);
         }
       }
 
       if (foundName && foundSeries) {
         score += 50; // Bonus for finding both name and series exactly
-        console.log(`Bonus for exact name and series match. Score: ${score}`);
       }
 
       if (score >= 80) { // If exact match found for name or collection/series, this is likely the best match
@@ -179,7 +194,6 @@ export function AddCarForm() {
           maxScore = score;
           bestMatch = car;
         }
-        console.log(`Best match updated to ${car.name} with score ${score} (exact match).`);
         continue; // Move to next car
       }
 
@@ -187,34 +201,28 @@ export function AddCarForm() {
         // Name matching (fuzzy)
         const distanceName = levenshtein(line, carNameLower);
         const similarityName = 1 - (distanceName / Math.max(line.length, carNameLower.length));
-        console.log(`  Line: "${line}" vs Car Name: "${carNameLower}" -> Similarity: ${(similarityName * 100).toFixed(2)}%`);
         if (similarityName > 0.7) { // 70% similarity for name
           score += similarityName * 10;
-          console.log(`Fuzzy name match for ${car.name} with line: ${line}. Similarity: ${similarityName.toFixed(2)}. Score: ${score}`);
         }
 
         if (carCollectionOrSeriesNameLower) {
           const distanceCollectionOrSeries = levenshtein(line, carCollectionOrSeriesNameLower);
           const similarityCollectionOrSeries = 1 - (distanceCollectionOrSeries / Math.max(line.length, carCollectionOrSeriesNameLower.length));
-          console.log(`  Line: "${line}" vs Car Series: "${carCollectionOrSeriesNameLower}" -> Similarity: ${(similarityCollectionOrSeries * 100).toFixed(2)}%`);
           if (similarityCollectionOrSeries > 0.7) {
             score += similarityCollectionOrSeries * 5;
-            console.log(`Fuzzy collection/series name match for ${car.name} with line: ${line}. Similarity: ${similarityCollectionOrSeries.toFixed(2)}. Score: ${score}`);
           }
-        } else {
-          console.log(`  Car Series is empty for ${car.name}, skipping series fuzzy match.`);
         }
       }
 
       if (score > maxScore) {
         maxScore = score;
         bestMatch = car;
-        console.log(`Best match updated to ${car.name} with score ${score} (fuzzy match).`);
       }
     }
 
+    const MIN_MATCH_SCORE = 30; // Threshold for considering a match valid
     console.log(`Final best match: ${bestMatch?.name || 'None'} with max score: ${maxScore}`);
-    if (maxScore < 20) {
+    if (maxScore < MIN_MATCH_SCORE) {
       bestMatch = null;
     }
 
@@ -244,9 +252,24 @@ export function AddCarForm() {
   };
 
   useEffect(() => {
+    setIsCarDataLoading(true);
     fetch('/all_cars.json')
-      .then(response => response.json())
-      .then(data => setAllCars(data));
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        return response.json();
+      })
+      .then(data => {
+        setAllCars(data);
+      })
+      .catch(error => {
+        console.error("Error fetching all_cars.json:", error);
+        toast.error("No se pudo cargar la base de datos de coches.");
+      })
+      .finally(() => {
+        setIsCarDataLoading(false);
+      });
   }, []);
 
   useEffect(() => {
@@ -299,7 +322,6 @@ export function AddCarForm() {
 
 
   const handleOcr = async () => {
-    console.log("handleOcr called");
     if (!isPuterAuthenticated) {
       toast.error("Por favor, inicia sesión con Puter para usar la IA.");
       return;
@@ -310,6 +332,7 @@ export function AddCarForm() {
       return;
     }
 
+    setIsOcrRunning(true);
     toast.info("Leyendo datos de la imagen con IA...");
 
     try {
@@ -329,25 +352,35 @@ export function AddCarForm() {
       const { bestMatch, seriesNumber, yearlyCollectionNumber, modelYear: parsedModelYear } = parseOcrText(lines);
       console.log("Parsed OCR data:", { bestMatch, seriesNumber, yearlyCollectionNumber, parsedModelYear });
 
+      // Clear fields before setting new values
+      setName('');
+      setCollectionOrSeriesName('');
+      setColor('');
+
+      // Always set the parsed values
+      setModelYear(parsedModelYear || '');
+      setSeriesNumber(seriesNumber || '');
+      setYearlyCollectionNumber(yearlyCollectionNumber || '');
+
       if (bestMatch) {
+        // If a good match is found, populate all its data
         setName(bestMatch.name || '');
         setCollectionOrSeriesName(bestMatch.collection_or_series_name || '');
-        setModelYear(parsedModelYear || bestMatch.model_year || '');
-        setSeriesNumber(seriesNumber || '');
-        setYearlyCollectionNumber(yearlyCollectionNumber || '');
+        setModelYear(parsedModelYear || bestMatch.model_year || ''); // OCR year takes precedence
         setColor(bestMatch.color || '');
         toast.success("¡Formulario autocompletado con el coche encontrado!");
       } else if (seriesNumber || yearlyCollectionNumber || parsedModelYear) {
-        setModelYear(parsedModelYear || '');
-        setSeriesNumber(seriesNumber || '');
-        setYearlyCollectionNumber(yearlyCollectionNumber || '');
-        toast.info("Se encontraron algunos datos, pero no se pudo identificar el coche.");
+        // If no car match, but some data was found
+        toast.info("Se encontraron algunos datos, pero no se pudo identificar el coche. Revisa los campos.");
       } else {
-        toast.warning("No se encontró un coche coincidente en la base de datos.");
+        // If nothing was found
+        toast.warning("No se pudo extraer ningún dato relevante de la imagen.");
       }
     } catch (error) {
       console.error("OCR Error:", error);
       toast.error("Error al leer los datos de la imagen.");
+    } finally {
+      setIsOcrRunning(false);
     }
   };
 
@@ -537,7 +570,9 @@ export function AddCarForm() {
                   {!isPuterAuthenticated ? (
                     <Button ref={puterLoginBtnRef} type="button" className="mt-2">Login con Puter para usar IA</Button>
                   ) : (
-                    <Button type="button" onClick={handleOcr} className="mt-2">Auto-rellenar con IA</Button>
+                    <Button type="button" onClick={handleOcr} className="mt-2" disabled={isCarDataLoading || isOcrRunning}>
+                      {isCarDataLoading ? 'Cargando base de datos...' : isOcrRunning ? 'Procesando imagen...' : 'Auto-rellenar con IA'}
+                    </Button>
                   )}
                 </div>
               )}

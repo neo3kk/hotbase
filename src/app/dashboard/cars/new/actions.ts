@@ -6,9 +6,10 @@ import { z } from 'zod';
 
 const carSchema = z.object({
   name: z.string().min(1, { message: 'El nombre del coche es requerido.' }),
-  model_year: z.coerce.number().optional(), // Changed from year
-  series: z.string().optional(),
-  collection_number: z.string().optional(),
+  model_year: z.coerce.number().optional(),
+  collection_or_series_name: z.string().optional(),
+  series_number: z.string().optional(),
+  yearly_collection_number: z.string().optional(),
   color: z.string().optional(),
   condition: z.string(),
   notes: z.string().optional(),

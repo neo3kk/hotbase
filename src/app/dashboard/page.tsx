@@ -8,7 +8,7 @@ import { Plus } from "lucide-react";
 type Car = {
   id: string;
   name: string;
-  series: string | null;
+  collection_or_series_name: string | null;
   car_images: { image_url: string }[] | [];
 };
 
@@ -28,21 +28,21 @@ export default async function DashboardPage({
 
   const { data: seriesData, error: seriesError } = await supabase
     .from('cars')
-    .select('series')
-    .not('series', 'is', null);
+    .select('collection_or_series_name')
+    .not('collection_or_series_name', 'is', null);
 
   const uniqueSeries = seriesData 
-    ? [...new Set(seriesData.map(item => item.series).filter(Boolean) as string[])] 
+    ? [...new Set(seriesData.map(item => item.collection_or_series_name).filter(Boolean) as string[])] 
     : [];
 
   let carQuery = supabase
     .from("cars")
-    .select(`id, name, series, car_images ( image_url )`)
+    .select(`id, name, collection_or_series_name, car_images ( image_url )`)
     .order('created_at', { ascending: false })
     .limit(1, { foreignTable: "car_images" });
 
   if (query) carQuery = carQuery.ilike('name', `%${query}%`);
-  if (seriesFilter && seriesFilter !== 'all') carQuery = carQuery.eq('series', seriesFilter);
+  if (seriesFilter && seriesFilter !== 'all') carQuery = carQuery.eq('collection_or_series_name', seriesFilter);
   if (conditionFilter && conditionFilter !== 'all') carQuery = carQuery.eq('condition', conditionFilter);
 
   const { data: cars, error } = await carQuery;
@@ -91,7 +91,7 @@ export default async function DashboardPage({
                 </div>
                 <div className="p-3">
                   <h3 className="truncate font-semibold">{car.name}</h3>
-                  <p className="truncate text-sm text-muted-foreground">{car.series || "Sin serie"}</p>
+                  <p className="truncate text-sm text-muted-foreground">{car.collection_or_series_name || "Sin serie"}</p>
                 </div>
               </div>
             </Link>
