@@ -74,7 +74,6 @@ export function AddCarForm() {
   const [yearlyCollectionNumber, setYearlyCollectionNumber] = useState('');
   const [color, setColor] = useState('');
   const [isPuterAuthenticated, setIsPuterAuthenticated] = useState(false);
-  const puterLoginBtnRef = useRef<HTMLButtonElement>(null);
   const [allCars, setAllCars] = useState<any[]>([]);
   const [allCollections, setAllCollections] = useState<string[]>([]);
   const [isCarDataLoading, setIsCarDataLoading] = useState(true);
@@ -298,34 +297,29 @@ export function AddCarForm() {
     checkPuterAuth();
   }, []);
 
-  useEffect(() => {
-    const loginBtn = puterLoginBtnRef.current;
-    const handlePuterLogin = () => {
-      if (typeof puter !== 'undefined') {
-        puter.auth.signIn()
-          .then((user) => {
-            if (user) {
-              setIsPuterAuthenticated(true);
-              toast.success("¡Autenticado con Puter!");
-            }
-          })
-          .catch((error) => {
-            console.error("Puter login error:", error);
-            toast.error("Error al iniciar sesión con Puter.");
-          });
-      }
-    };
+  const handlePuterLogin = () => {
+    if (typeof puter !== 'undefined') {
+      const timeout = setTimeout(() => {
+        toast.warning("El pop-up de inicio de sesión puede haber sido bloqueado. Por favor, deshabilita tu bloqueador de anuncios y vuelve a intentarlo.");
+      }, 3000);
 
-    if (loginBtn) {
-      loginBtn.addEventListener('click', handlePuterLogin);
+      puter.auth.signIn()
+        .then((user) => {
+          clearTimeout(timeout);
+          if (user) {
+            setIsPuterAuthenticated(true);
+            toast.success("¡Autenticado con Puter!");
+          }
+        })
+        .catch((error) => {
+          clearTimeout(timeout);
+          console.error("Puter login error:", error);
+          toast.error("Error al iniciar sesión con Puter.");
+        });
+    } else {
+      toast.error("La API de Puter no está disponible.");
     }
-
-    return () => {
-      if (loginBtn) {
-        loginBtn.removeEventListener('click', handlePuterLogin);
-      }
-    };
-  }, [puterLoginBtnRef]);
+  };
 
 
 
@@ -584,7 +578,7 @@ export function AddCarForm() {
                     </Button>
                   </div>
                   {!isPuterAuthenticated ? (
-                    <Button ref={puterLoginBtnRef} type="button" className="mt-2">Login con Puter para usar IA</Button>
+                    <Button onClick={handlePuterLogin} type="button" className="mt-2">Login con Puter para usar IA</Button>
                   ) : (
                     <Button type="button" onClick={handleOcr} className="mt-2" disabled={isCarDataLoading || isOcrRunning}>
                       {isCarDataLoading ? 'Cargando base de datos...' : isOcrRunning ? 'Procesando imagen...' : 'Auto-rellenar con IA'}
