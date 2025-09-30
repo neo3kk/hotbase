@@ -32,7 +32,7 @@ export default async function CarDetailsPage({ params: { id } }: { params: { id:
                   alt={`Imagen principal de ${car.name}`}
                   fill
                   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                  className="object-cover"
+                  className="object-contain"
                 />
               </div>
               <div className="grid grid-cols-3 gap-4">
@@ -43,7 +43,7 @@ export default async function CarDetailsPage({ params: { id } }: { params: { id:
                       alt={`Imagen secundaria de ${car.name}`}
                       fill
                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                      className="object-cover"
+                      className="object-contain"
                     />
                   </div>
                 ))}

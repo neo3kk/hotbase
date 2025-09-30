@@ -27,6 +27,9 @@ export default function RootLayout({
           </div>
         </main>
         <Toaster richColors />
+        <footer className="text-center text-xs text-white/50 py-2">
+          <p>v{process.env.NEXT_PUBLIC_APP_VERSION}</p>
+        </footer>
       </body>
     </html>
   );

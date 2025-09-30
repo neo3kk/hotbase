@@ -84,16 +84,17 @@ export default async function DashboardPage({
               <div className="group relative overflow-hidden rounded-lg border bg-card text-card-foreground transition-all hover:shadow-lg">
                 <div className="aspect-video w-full overflow-hidden">
                   {car.car_images.length > 0 ? (
-                    <Image src={car.car_images[0].image_url} alt={`Imagen de ${car.name}`} fill className="object-cover transition-transform group-hover:scale-105"/>
+                    <Image src={car.car_images[0].image_url} alt={`Imagen de ${car.name}`} fill className="object-contain transition-transform group-hover:scale-105"/>
                   ) : (
                     <div className="flex h-full w-full items-center justify-center bg-muted"><span className="text-sm text-muted-foreground">Sin imagen</span></div>
                   )}
                 </div>
-                <div className="p-3">
+
+              </div>
+                              <div className="p-3">
                   <h3 className="truncate font-semibold">{car.name}</h3>
                   <p className="truncate text-sm text-muted-foreground">{car.collection_or_series_name || "Sin serie"}</p>
                 </div>
-              </div>
             </Link>
           ))}
         </div>

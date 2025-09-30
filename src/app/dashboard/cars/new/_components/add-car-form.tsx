@@ -257,7 +257,7 @@ export function AddCarForm() {
     return { bestMatch, seriesNumber, yearlyCollectionNumber, modelYear, collectionOrSeriesName: (bestMatch?.series && bestMatch.series[0]) || null };
   };
 
-  const resizeImage = (dataUrl: string, maxWidth = 600): Promise<string> => {
+  const resizeImage = (dataUrl: string, maxWidth = 300): Promise<string> => {
     return new Promise((resolve) => {
       const img = document.createElement('img');
       img.onload = () => {

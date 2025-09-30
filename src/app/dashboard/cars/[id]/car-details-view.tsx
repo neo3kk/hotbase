@@ -40,7 +40,7 @@ export default function CarDetailsView({ params }: { params: Promise<{ id: strin
                   src={car.car_images[0].image_url} 
                   alt={`Imagen principal de ${car.name}`}
                   fill
-                  className="object-cover"
+                  className="object-contain"
                 />
               </div>
               <div className="grid grid-cols-3 gap-4">
@@ -50,7 +50,7 @@ export default function CarDetailsView({ params }: { params: Promise<{ id: strin
                       src={image.image_url} 
                       alt={`Imagen secundaria de ${car.name}`}
                       fill
-                      className="object-cover"
+                      className="object-contain"
                     />
                   </div>
                 ))}
