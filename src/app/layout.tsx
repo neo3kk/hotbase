@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
+import CookieConsentBanner from "@/components/cookie-consent-banner";
+import ManageCookiesButton from "@/components/manage-cookies-button";
+import Link from "next/link";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -26,9 +29,12 @@ export default function RootLayout({
             {children}
           </div>
         </main>
+        <CookieConsentBanner />
         <Toaster richColors />
-        <footer className="text-center text-xs text-white/50 py-2">
+        <footer className="text-center text-xs text-white/50 py-2 flex justify-center items-center space-x-4">
           <p>v{process.env.NEXT_PUBLIC_APP_VERSION}</p>
+          <Link href="/privacy-policy" className="underline">Política de Privacidad</Link>
+          <ManageCookiesButton />
         </footer>
       </body>
     </html>
