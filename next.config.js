@@ -20,6 +20,12 @@ const nextConfig = {
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'orangetrackdiecast.com',
+        port: '',
+        pathname: '/**',
+      },
     ],
   },
 };

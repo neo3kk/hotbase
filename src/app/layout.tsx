@@ -38,9 +38,12 @@ export default function RootLayout({
         <CookieConsentBanner />
         <Toaster richColors />
         <footer className="text-center text-xs text-white/50 py-4 flex flex-col justify-center items-center space-y-2">
-          <div className="mb-2">
+          <div className="mb-2 flex items-center gap-4">
             <a href="https://www.paypal.com/donate/?business=neo3kk@gmail.com&no_recurring=0&currency_code=EUR&amount=2" target="_blank" rel="noopener noreferrer">
               <Button variant="outline">Apóyame con un café ☕</Button>
+            </a>
+            <a href="https://t.me/hotbaseapp" target="_blank" rel="noopener noreferrer">
+              <Button variant="outline">Canal de Telegram ✈️</Button>
             </a>
           </div>
           <div className="flex justify-center items-center space-x-4">

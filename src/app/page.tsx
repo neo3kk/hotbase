@@ -3,6 +3,81 @@ import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { Header } from "@/components/header";
 import Image from "next/image";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+
+// Define the type for a news item
+type NewsItem = {
+  title: string;
+  link: string;
+  pubDate: string;
+  snippet: string;
+  imageUrl: string | null;
+};
+
+async function NewsSection() {
+  // Use production domain for server-side fetching in production
+  const baseUrl = process.env.NODE_ENV === 'production' 
+    ? 'https://hotbaseapp.com' 
+    : 'http://localhost:3000';
+  
+  let newsItems: NewsItem[] = [];
+  let fetchError = false;
+
+  try {
+    // The fetch call is automatically memoized by Next.js on the server
+    const res = await fetch(`${baseUrl}/api/news`);
+
+    if (!res.ok) {
+      throw new Error('Failed to fetch news');
+    }
+
+    const data = await res.json();
+    newsItems = data.items;
+  } catch (error) {
+    console.error(error);
+    fetchError = true;
+  }
+
+  if (fetchError || !newsItems || newsItems.length === 0) {
+    // Don't render the section if fetching fails or there are no items
+    return null;
+  }
+
+  return (
+    <div className="mt-24 w-full max-w-5xl">
+      <h2 className="text-3xl font-bold text-center mb-8">Últimas Noticias</h2>
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {newsItems.map((item) => (
+          <a href={item.link} target="_blank" rel="noopener noreferrer" key={item.link} className="block">
+            <Card className="h-full hover:border-blue-500 transition-colors duration-300 ease-in-out overflow-hidden">
+              {item.imageUrl && (
+                <div className="aspect-video relative w-full">
+                  <Image 
+                    src={item.imageUrl} 
+                    alt={item.title || 'Imagen de la noticia'} 
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+              )}
+              <CardHeader>
+                <CardTitle className="text-lg leading-tight">{item.title}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground line-clamp-3">{item.snippet}</p>
+              </CardContent>
+            </Card>
+          </a>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default async function Home() {
   const supabase = createClient();
@@ -15,7 +90,7 @@ export default async function Home() {
     <>
       {user && <Header />}
 
-      <div className="flex-1 flex flex-col items-center justify-center text-center px-4">
+      <div className="flex-1 flex flex-col items-center justify-center text-center px-4 py-12">
         
         {!user && (
           <div className="mb-8">
@@ -49,6 +124,9 @@ export default async function Home() {
             </>
           )}
         </div>
+
+        <NewsSection />
+
       </div>
     </>
   );
