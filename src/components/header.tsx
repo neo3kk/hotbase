@@ -11,6 +11,7 @@ import {
 import { UserAvatar } from "./user-avatar";
 import { LogoutButton } from "./logout-button";
 import Image from "next/image";
+import { Button } from "./ui/button";
 
 export async function Header() {
   const supabase = createClient();
@@ -27,7 +28,10 @@ export async function Header() {
         </div>
         
         {/* Lado Derecho: Acciones de Usuario */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-4">
+          <a href="https://www.paypal.com/donate/?business=neo3kk@gmail.com&no_recurring=0&currency_code=EUR" target="_blank" rel="noopener noreferrer">
+            <Button variant="outline">Apóyame con un café ☕</Button>
+          </a>
           {user && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
