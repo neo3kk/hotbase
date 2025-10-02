@@ -13,13 +13,7 @@ const nextConfig = {
         port: '',
         pathname: '/storage/v1/**',
       },
-      {
-        protocol: 'https',
-        hostname: 'izntndbzqbiwssduoxjw.supabase.co',
-        port: '',
-        // Este pathname permite cualquier ruta dentro del storage
-        pathname: '/storage/v1/**',
-      },
+
       {
         protocol: 'https',
         hostname: 'lh3.googleusercontent.com',
