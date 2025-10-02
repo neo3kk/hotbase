@@ -28,10 +28,7 @@ export async function Header() {
         </div>
         
         {/* Lado Derecho: Acciones de Usuario */}
-        <div className="flex items-center gap-4">
-          <a href="https://www.paypal.com/donate/?business=neo3kk@gmail.com&no_recurring=0&currency_code=EUR" target="_blank" rel="noopener noreferrer">
-            <Button variant="outline">Apóyame con un café ☕</Button>
-          </a>
+        <div className="flex items-center gap-2">
           {user && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

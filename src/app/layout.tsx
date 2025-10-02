@@ -6,6 +6,7 @@ import CookieConsentBanner from "@/components/cookie-consent-banner";
 import ManageCookiesButton from "@/components/manage-cookies-button";
 import Link from "next/link";
 import Script from "next/script";
+import { Button } from "@/components/ui/button";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -38,10 +39,17 @@ export default function RootLayout({
         </main>
         <CookieConsentBanner />
         <Toaster richColors />
-        <footer className="text-center text-xs text-white/50 py-2 flex justify-center items-center space-x-4">
-          <p>v{process.env.NEXT_PUBLIC_APP_VERSION}</p>
-          <Link href="/privacy-policy" className="underline">Política de Privacidad</Link>
-          <ManageCookiesButton />
+        <footer className="text-center text-xs text-white/50 py-4 flex flex-col justify-center items-center space-y-2">
+          <div className="mb-2">
+            <a href="https://www.paypal.com/donate/?business=neo3kk@gmail.com&no_recurring=0&currency_code=EUR&amount=2" target="_blank" rel="noopener noreferrer">
+              <Button variant="outline">Apóyame con un café ☕</Button>
+            </a>
+          </div>
+          <div className="flex justify-center items-center space-x-4">
+            <p>v{process.env.NEXT_PUBLIC_APP_VERSION}</p>
+            <Link href="/privacy-policy" className="underline">Política de Privacidad</Link>
+            <ManageCookiesButton />
+          </div>
         </footer>
       </body>
     </html>
