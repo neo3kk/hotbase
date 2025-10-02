@@ -4,6 +4,8 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 export async function GET(request: NextRequest) {
+  console.log("Auth Callback Request Headers:", request.headers);
+
   const { searchParams } = new URL(request.url)
   const code = searchParams.get('code')
   const next = searchParams.get('next') ?? '/dashboard'
