@@ -5,7 +5,6 @@ import { Toaster } from "@/components/ui/sonner";
 import CookieConsentBanner from "@/components/cookie-consent-banner";
 import ManageCookiesButton from "@/components/manage-cookies-button";
 import Link from "next/link";
-import Script from "next/script";
 import { Button } from "@/components/ui/button";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -24,12 +23,11 @@ export default function RootLayout({
     <html lang="es" className="dark" style={{ colorScheme: 'dark' }}>
       <head>
         <script src="https://js.puter.com/v2/"></script>
-        <Script
+        <script
           async
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2460841719083107"
           crossOrigin="anonymous"
-          strategy="afterInteractive"
-        />
+        ></script>
       </head>
       <body className={`${inter.className} flex flex-col min-h-screen bg-background`}>
         <main className="flex-grow flex flex-col">
