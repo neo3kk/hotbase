@@ -77,13 +77,13 @@ export default function CarDetailsView({ params }: { params: Promise<{ id: strin
           <div className="space-y-6">
             <div>
               <h1 className="text-3xl font-bold">{car.name}</h1>
-              <p className="text-lg text-gray-400">{car.series || 'Sin serie'}</p>
+              <p className="text-lg text-gray-400">{car.collection_or_series_name || 'Sin serie'}</p>
             </div>
             <div className="grid grid-cols-2 gap-4 text-sm">
+              <div className="space-y-1"><p className="text-gray-500">Número de Colección Anual</p><p>{car.yearly_collection_number || 'N/A'}</p></div>
+              <div className="space-y-1"><p className="text-gray-500">Numero serie</p><p>{car.series_number || 'N/A'}</p></div>
               <div className="space-y-1"><p className="text-gray-500">Año Modelo</p><p>{car.model_year || 'N/A'}</p></div>
-              <div className="space-y-1"><p className="text-gray-500">Año Lanzamiento</p><p>{car.release_year || 'N/A'}</p></div>
               <div className="space-y-1"><p className="text-gray-500">Color</p><p>{car.color || 'N/A'}</p></div>
-              <div className="space-y-1"><p className="text-gray-500">Nº Colección</p><p>{car.collection_number || 'N/A'}</p></div>
               <div className="space-y-1"><p className="text-gray-500">Condición</p><p className="capitalize">{car.condition || 'N/A'}</p></div>
               <div className="space-y-1"><p className="text-gray-500">Precio Compra</p><p>{car.purchase_price ? `${car.purchase_price}€` : 'N/A'}</p></div>
             </div>

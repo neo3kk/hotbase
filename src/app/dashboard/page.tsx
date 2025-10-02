@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { FilterControls } from "./_components/filter-controls";
+import { ExportCollectionButton } from "./_components/export-collection-button";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
@@ -68,8 +69,9 @@ export default async function DashboardPage({
         </div>
       </div>
       
-      <div>
+      <div className="flex flex-col sm:flex-row gap-4 items-center">
         <FilterControls series={uniqueSeries} />
+        {cars && cars.length > 0 && <ExportCollectionButton />}
       </div>
       
       {cars && cars.length === 0 ? (

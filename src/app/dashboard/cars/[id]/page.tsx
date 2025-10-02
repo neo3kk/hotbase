@@ -7,6 +7,7 @@ import Image from 'next/image';
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { DeleteCarButton } from "./_components/delete-car-button";
+import { BackButton } from "./_components/back-button";
 
 // Definiendo los tipos para el coche y las imágenes
 type CarImage = { id: string; image_url: string; };
@@ -141,6 +142,9 @@ export default function CarDetailsPage({ params: { id } }: { params: { id: strin
           </div>
         </div>
       )}
+      <div className="flex justify-center py-8">
+        <BackButton />
+      </div>
     </>
   );
 }
