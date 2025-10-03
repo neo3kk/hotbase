@@ -32,6 +32,7 @@ async function sendTelegramMessage(text: string) {
 }
 
 export async function GET() {
+  console.log('Starting news fetch...');
   const parser = new Parser({
     customFields: {
       item: ['content:encoded'],
@@ -50,10 +51,14 @@ export async function GET() {
 
     const feedText = await response.text();
     const feed = await parser.parseString(feedText);
-    const newsItems = feed.items.slice(0, 5); // Get latest 5
+    console.log(`Found ${feed.items.length} items in RSS feed.`);
+
+    const newsItems = feed.items.slice(0, 10); // Get latest 10
 
     for (const item of newsItems.reverse()) { // Process oldest of the batch first
       if (!item.link) continue;
+
+      console.log(`Processing item: ${item.title} - ${item.link}`);
 
       const { data: existingNews, error: selectError } = await supabase
         .from('sent_news')
@@ -67,6 +72,7 @@ export async function GET() {
       }
       
       if (!existingNews) {
+        console.log(`New item found: "${item.title}". Sending to Telegram and saving to DB.`);
         const message = `<b>${item.title}</b>\n\n${item.link}`;
         try {
           await sendTelegramMessage(message);
@@ -80,10 +86,12 @@ export async function GET() {
         } catch (telegramError) {
           console.error('Failed to send message to Telegram:', telegramError);
         }
+      } else {
+        console.log(`Item "${item.title}" already exists. Skipping.`);
       }
     }
 
-    const formattedItems = feed.items.slice(0, 5).map(item => {
+    const formattedItems = feed.items.slice(0, 10).map(item => {
       let imageUrl = null;
       const content = item['content:encoded'] || item.content;
 
@@ -106,6 +114,7 @@ export async function GET() {
     });
 
     const itemsWithImages = formattedItems.filter(item => item.imageUrl);
+    console.log('Formatted items to be sent in response:', itemsWithImages);
 
     return NextResponse.json({ items: itemsWithImages });
 
